@@ -2,4 +2,14 @@
     <string name="app_name">ALIVIA2</string>
     <string name="welcome_message">¡Hola, %1$s!</string>
     <string name="default_user_name">Usuario</string>
+
+    <!-- Strings para LoginActivity -->
+    <string name="logo_description">Logo de Alivia</string>
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="email_hint">Correo Electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="login_button_text">Ingresar</string>
+    <string name="no_account_text">¿No tienes una cuenta?</string>
+    <string name="register_now_text">Regístrate ahora</string>
 </resources>
