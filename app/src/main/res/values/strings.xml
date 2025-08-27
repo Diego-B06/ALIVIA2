@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ALIVIA2</string>
+    <string name="welcome_message">¡Hola, %1$s!</string>
+    <string name="default_user_name">Usuario</string>
 </resources>

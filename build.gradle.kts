@@ -4,6 +4,7 @@ import org.apache.tools.ant.util.JavaEnvUtils.VERSION_11
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
+    id("com.google.gms.google-services") version "4.4.3" apply false
 }
 val buildToolsVersion by extra("36.0.0")
 val sourceCompatibility by extra(VERSION_11)
