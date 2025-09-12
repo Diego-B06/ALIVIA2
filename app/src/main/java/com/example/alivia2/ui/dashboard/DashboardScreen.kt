@@ -1,5 +1,10 @@
 package com.example.alivia2.ui.dashboard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush // Added import
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -35,6 +40,7 @@ import com.example.alivia2.R
 import com.example.alivia2.ui.theme.ALIVIA2Theme
 import com.example.alivia2.ui.theme.LightGreen
 import com.example.alivia2.ui.theme.DarkBlue
+import kotlinx.coroutines.delay
 
 // Main Composable for the Dashboard Screen
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,36 +62,70 @@ fun DashboardScreen(onLogout: () -> Unit = {}) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name), fontWeight = FontWeight.Bold) },
+                    title = {
+                        Image(
+                            painter = painterResource(id = R.mipmap.alivia2_logo),
+                            contentDescription = "Alivia2 Logo",
+                            modifier = Modifier.height(55.dp), 
+                            contentScale = ContentScale.Fit
+                        )
+                    },
+                    actions = { 
+                        Image(
+                            painter = painterResource(id = R.mipmap.logo_alivia),
+                            contentDescription = "Logo de Alivia",
+                            modifier = Modifier
+                                .size(150.dp) 
+                                .padding(end = 24.dp) 
+                        )
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Transparent, // Make TopAppBar transparent
-                        titleContentColor = MaterialTheme.colorScheme.onBackground // Or a color that contrasts well with your gradient
+                        containerColor = Color.Transparent, 
+                        titleContentColor = MaterialTheme.colorScheme.onBackground 
                     )
                 )
             },
             bottomBar = {
                 DashboardBottomNavigationBar(
                     currentScreen = currentScreen,
-                    containerColor = Color.Transparent, // Make BottomNav transparent
+                    containerColor = Color.Transparent, 
                     onScreenSelected = { screen ->
                         currentScreen = screen
                     }
                 )
             },
-            containerColor = Color.Transparent // Make Scaffold container transparent
+            containerColor = Color.Transparent 
         ) { paddingValues ->
-            LazyColumn(
+            var contentVisible by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                delay(200L) // Small delay so the animation is noticeable
+                contentVisible = true
+            }
+
+            AnimatedVisibility(
+                visible = contentVisible,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(paddingValues) // Apply Scaffold's padding
+                    .padding(16.dp),       // Apply the general content padding
+                enter = slideInVertically(
+                    initialOffsetY = { fullHeight -> fullHeight / 2 }, // Start from halfway down
+                    animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing)
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 300, delayMillis = 150)
+                )
             ) {
-                item { WellbeingLevelSection() }
-                item { TodaysFocusSection() }
-                item { CalendarViewSection() }
-                item { AliviaAssistantSection() }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(), // LazyColumn fills AnimatedVisibility
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item { WellbeingLevelSection() }
+                    item { TodaysFocusSection() }
+                    item { CalendarViewSection() }
+                    item { AliviaAssistantSection() }
+                }
             }
         }
     }
@@ -223,7 +263,7 @@ fun AliviaAssistantSection() {
     DashboardCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
-                painter = painterResource(id = R.drawable.ic_alivia_logo), 
+                painter = painterResource(id = R.mipmap.logo_alivia), 
                 contentDescription = "Alivia Assistant",
                 modifier = Modifier
                     .size(40.dp)
