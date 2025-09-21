@@ -3,6 +3,8 @@
 
     <!-- Permiso de Internet añadido -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permiso de Notificaciones añadido -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
