@@ -8,8 +8,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut // Nueva importación para animación de salida
-import androidx.compose.animation.shrinkVertically // Nueva importación para animación de salida
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -17,7 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Necesario para usar key en LazyColumn
+// import androidx.compose.foundation.lazy.items // No es estrictamente necesario para Column, pero no daña
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -61,15 +61,14 @@ const val TASK_NOTIFICATION_CHANNEL_NAME = "Task Completions"
 const val TASK_NOTIFICATION_ID_BASE = 1000
 
 // Duraciones de animación
-const val TASK_COMPLETE_ANIM_DELAY = 1500L // Retraso antes de que la tarea desaparezca
-const val TASK_EXIT_ANIM_DURATION = 500L   // Duración de la animación de desaparición
+const val TASK_COMPLETE_ANIM_DELAY = 1500L
+const val TASK_EXIT_ANIM_DURATION = 500L
 
-// Data class for a focus task - ahora con isVisible
 data class FocusTask(
     val id: Int,
     val text: String,
-    var isChecked: Boolean, // var para poder modificarla directamente en la lista
-    var isVisible: Boolean = true // var para controlar la animación de visibilidad
+    var isChecked: Boolean,
+    var isVisible: Boolean = true
 )
 
 fun createTaskNotificationChannel(context: Context) {
@@ -98,7 +97,6 @@ fun showTaskCompletedNotification(context: Context, task: FocusTask) {
         notify(TASK_NOTIFICATION_ID_BASE + task.id, builder.build())
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -175,7 +173,7 @@ fun DashboardScreen(onLogout: () -> Unit = {}) {
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
                             item { WellbeingLevelSection() }
-                            item { TodaysFocusSection() }
+                            item { TodaysFocusSection() } // This item contains TodaysFocusSection
                             item { CalendarViewSection() }
                             item { AliviaAssistantSection() }
                         }
@@ -217,7 +215,6 @@ fun WellbeingCircularProgressBar(progress: Float, levelText: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class) // Necesario para AnimatedVisibility en LazyColumn items
 @Composable
 fun TodaysFocusSection() {
     val context = LocalContext.current
@@ -233,7 +230,7 @@ fun TodaysFocusSection() {
     DashboardCard {
         Text("Today's Focus", fontSize = 18.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(12.dp))
-        if (focusTasks.none { it.isVisible }) { // Mostrar mensaje si no hay tareas visibles
+        if (focusTasks.none { it.isVisible }) {
             Text(
                 "All tasks completed or none added!",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -241,9 +238,9 @@ fun TodaysFocusSection() {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
             )
         } else {
-            // Usamos LazyColumn para que las animaciones de eliminación sean más suaves con `key`
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(items = focusTasks, key = { task -> task.id }) { task ->
+            // CORRECTED: Replaced LazyColumn with Column
+            Column(modifier = Modifier.fillMaxWidth()) {
+                focusTasks.forEach { task -> // CORRECTED: Using forEach to iterate
                     FocusItem(
                         task = task,
                         onTaskCheckChanged = { currentTask, newCheckedState ->
@@ -252,27 +249,25 @@ fun TodaysFocusSection() {
                                 val taskToUpdate = focusTasks[taskIndex]
                                 val previouslyChecked = taskToUpdate.isChecked
 
-                                // Actualizar estado de isChecked e isVisible
                                 focusTasks[taskIndex] = taskToUpdate.copy(
                                     isChecked = newCheckedState,
-                                    isVisible = if (newCheckedState) taskToUpdate.isVisible else true // Si se desmarca, siempre visible
+                                    isVisible = if (newCheckedState) taskToUpdate.isVisible else true
                                 )
 
                                 if (newCheckedState && !previouslyChecked) {
                                     showTaskCompletedNotification(context, taskToUpdate)
                                     coroutineScope.launch {
                                         delay(TASK_COMPLETE_ANIM_DELAY)
-                                        // Volver a encontrar la tarea para asegurarse de que sigue marcada y debe ocultarse
                                         val taskInList = focusTasks.find { it.id == currentTask.id }
                                         if (taskInList != null && taskInList.isChecked) {
-                                            focusTasks[taskIndex] = taskInList.copy(isVisible = false)
+                                            val indexToHide = focusTasks.indexOfFirst { it.id == taskInList.id }
+                                            if (indexToHide != -1) {
+                                                focusTasks[indexToHide] = focusTasks[indexToHide].copy(isVisible = false)
+                                            }
                                             delay(TASK_EXIT_ANIM_DURATION)
-                                            focusTasks.remove(taskInList) // Eliminar de la lista después de la animación
+                                            focusTasks.remove(taskInList)
                                         }
                                     }
-                                } else if (!newCheckedState) {
-                                    // Si se desmarca, asegurar que es visible y cancelar la ocultación (si estaba en progreso)
-                                    // El copy anterior ya maneja la visibilidad al desmarcar
                                 }
                             }
                         }
@@ -285,12 +280,11 @@ fun TodaysFocusSection() {
 
 @Composable
 fun FocusItem(task: FocusTask, onTaskCheckChanged: (task: FocusTask, isChecked: Boolean) -> Unit) {
-    // AnimatedVisibility para la animación de entrada/salida del ítem completo
     AnimatedVisibility(
         visible = task.isVisible,
         exit = shrinkVertically(animationSpec = tween(durationMillis = TASK_EXIT_ANIM_DURATION.toInt())) +
                fadeOut(animationSpec = tween(durationMillis = TASK_EXIT_ANIM_DURATION.toInt())),
-        modifier = Modifier.fillMaxWidth() // Asegurar que AnimatedVisibility ocupe el espacio
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
